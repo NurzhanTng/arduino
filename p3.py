@@ -159,9 +159,13 @@ void setup() {
 void loop() {
   digitalWrite(8, gorit);   // true = горит
 }''', title='bool1.ino', hl=(1, 8)),
-    SP(8), H2('Знак «!» — наоборот', PURPLE),
+    SP(8),
+    CALL('try', ['Поменяй ' + k('true') + ' на ' + k('false') + ' и загрузи снова. Лампочка должна погаснуть и не мигать.']),
+], num=2)
+
+doc.page(L2, T2, 'Знак «!» — наоборот', [
     P('Восклицательный знак переворачивает bool: из ' + k('true') + ' делает ' + k('false') + ', а из ' + k('false') + ' — ' + k('true') + '. Вот мигалка, где нужна всего одна коробка:'),
-    SP(4),
+    SP(6),
     Code('''bool gorit = false;
 
 void setup() {
@@ -173,9 +177,13 @@ void loop() {
   digitalWrite(8, gorit);
   delay(500);
 }''', title='bool2.ino', hl=(8,)),
-    SP(6),
+    SP(8),
+    P('Каждый круг ' + k('loop') + ' переворачивает коробку. Смотри, как это выглядит по шагам:'),
+    SP(4),
     Dia(CW, 78, d_timeline, lab1='gorit', lab2='лампа',
         items=[('true', True, 'горит'), ('false', False, 'выкл'), ('true', True, 'горит'), ('false', False, 'выкл'), ('true', True, 'горит'), ('false', False, 'выкл')], lamp_col=RED),
+    SP(8),
+    CALL('try', ['Угадай: если убрать строку с ' + k('!') + ', будет ли лампочка мигать? Проверь на плате.']),
 ], num=2)
 
 doc.page(L2, T2, 'String — текст', [

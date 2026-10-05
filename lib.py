@@ -301,13 +301,42 @@ def SIDE(a, b, wa, wb, gap=0, valign='TOP'):
 
 
 # ---------- document ----------
+TOC_DEST = 'toc'
+
+
+def term_dest(key):
+    return 'term_' + re.sub(r'[^A-Za-z0-9_]+', '_', key)
+
+
+def term_link(key, text=None):
+    """Clickable term → glossary entry (destination registered on glossary pages)."""
+    label = text if text is not None else key
+    return '<link href="%s"><font color="#2F80ED"><u>%s</u></font></link>' % (term_dest(key), label)
+
+
 class Doc:
     def __init__(self, path, title):
+        self.path = path
         self.c = cv.Canvas(path, pagesize=A4)
-        self.c.setTitle(title); self.c.setAuthor('Arduino для юного программиста'); self.n = 0
+        self.c.setTitle(title)
+        self.c.setAuthor('Arduino для юного программиста')
+        self.n = 0
+        self.registry = []
+        self._outline_seen = set()
+        self.terms = {}
 
-    def page(self, theme, tag, title, story, num=None):
-        c = self.c; col, lt = THEMES[theme]; self.n += 1
+    def register_term(self, key, definition):
+        self.terms[key] = definition
+
+    def page(self, theme, tag, title, story, num=None, term_keys=None):
+        c = self.c
+        col, lt = THEMES[theme]
+        self.n += 1
+        dest = 'p%d' % self.n
+        level = 0 if tag not in self._outline_seen else 1
+        self._outline_seen.add(tag)
+        self.registry.append({'n': self.n, 'tag': tag, 'title': title, 'dest': dest, 'level': level})
+
         c.setFillColor(H('#FBFCFF')); c.rect(0, 0, W_, H_, fill=1, stroke=0)
         hh = 74
         c.setFillColor(col); c.rect(0, H_ - hh, W_, hh, fill=1, stroke=0)
@@ -317,18 +346,55 @@ class Doc:
         if num is not None:
             circ(c, LM + 22, H_ - hh / 2 + 2, 19, fill=white)
             T(c, str(num), LM + 22, H_ - hh / 2 - 5, 20, 'SB', col, 'c'); tx = LM + 54
-        else: tx = LM
+        else:
+            tx = LM
         T(c, tag, tx, H_ - 24, 9, 'SB', mix(col, white, 0.78))
         size = min(21, 372 / stringWidth(title, 'SB', 1))
         T(c, title, tx, H_ - 53, size, 'SB', white)
-        for i, cl in enumerate([RED, YELLOW, GREEN]): circ(c, W_ - LM - 52 + i * 26, H_ - hh / 2 + 2, 8.5, fill=cl, stroke=white, lw=1.6)
+        for i, cl in enumerate([RED, YELLOW, GREEN]):
+            circ(c, W_ - LM - 52 + i * 26, H_ - hh / 2 + 2, 8.5, fill=cl, stroke=white, lw=1.6)
         fr = Frame(LM, 40, CW, H_ - hh - 40 - 16, leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
         st = list(story); fr.addFromList(st, c)
         free = fr._y - fr._y1
         print(f'p{self.n:>2} {title[:34]:<34} free={free:6.1f}' + ('   <<< OVERFLOW %d' % len(st) if st else ''))
         line(c, LM, 32, LM + CW, 32, LINEC, 0.8)
-        T(c, 'Arduino для юного программиста', LM, 19, 8, 'S', MUTE)
+        toc_label = '← Содержание'
+        T(c, toc_label, LM, 19, 8, 'S', BLUE)
+        tw = stringWidth(toc_label, 'S', 8)
+        c.linkRect('', TOC_DEST, (LM, 14, LM + tw + 4, 30), relative=0)
         circ(c, LM + CW - 10, 21, 10, fill=col); T(c, str(self.n), LM + CW - 10, 18, 8.5, 'SB', white, 'c')
+        c.bookmarkPage(dest)
+        if tag == 'СОДЕРЖАНИЕ':
+            c.bookmarkPage(TOC_DEST)
+        for key in (term_keys or ()):
+            c.bookmarkPage(term_dest(key))
+        c.addOutlineEntry('%s — %s' % (tag, title) if level == 0 else title, dest, level, 0)
         c.showPage()
 
-    def save(self): self.c.save()
+    def toc_story(self, entries):
+        rows = []
+        ps = ParagraphStyle('toc', fontName='S', fontSize=9.5, leading=12, textColor=INK)
+        pn = ParagraphStyle('tocn', fontName='SB', fontSize=10, leading=12, textColor=BLUE, alignment=2)
+        for e in entries:
+            if e['tag'] in ('ОБЛОЖКА', 'СОДЕРЖАНИЕ'):
+                continue
+            left = Paragraph('<font color="#5B6784" size="7.5">%s</font>  <link href="%s">%s</link>'
+                             % (e['tag'], e['dest'], e['title']), ps)
+            right = Paragraph('<link href="%s"><font color="#2F80ED"><b>%d</b></font></link>' % (e['dest'], e['n']), pn)
+            rows.append([left, right])
+        if not rows:
+            return [P('Страницы появятся после сборки.')]
+        t = Table(rows, colWidths=[CW - 42, 42])
+        t.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 2.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
+            ('LINEBELOW', (0, 0), (-1, -2), 0.35, LINEC),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+        ]))
+        intro = P('Нажми на название или номер. Внизу страниц — ссылка <b>← Содержание</b>.', SMALL) if entries else SP(1)
+        return [intro, SP(6), t]
+
+    def save(self):
+        self.c.save()

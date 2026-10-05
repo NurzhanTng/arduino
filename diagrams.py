@@ -252,33 +252,60 @@ def diamond(c, cx, cy, w, h, text, fill, stroke, size=10.5):
 
 def d_flow2(c, w, h, cond, yes, no, top='loop() начался', bottom='delay(1000)  и снова сначала'):
     cx = w / 2
-    pill(c, cx, h - 16, 150, 24, top, H('#E8ECF5'), MUTE, 9.5)
-    dcy = h - 88
-    arrow(c, cx, h - 28, cx, dcy + 35, MUTE)
-    diamond(c, cx, dcy, 240, 70, cond, YELLOW_L, H('#C98A00'))
-    bx1, bx2 = 100, w - 100; by = dcy - 88
-    line(c, cx - 120, dcy, bx1, dcy, GREEN, 2.2); arrow(c, bx1, dcy, bx1, by + 21, GREEN, 2.2)
-    line(c, cx + 120, dcy, bx2, dcy, RED, 2.2); arrow(c, bx2, dcy, bx2, by + 21, RED, 2.2)
-    T(c, 'ДА', cx - 132, dcy + 6, 10.5, 'SB', GREEN, 'r'); T(c, 'НЕТ', cx + 132, dcy + 6, 10.5, 'SB', RED)
-    node(c, bx1, by, 176, 42, yes[0], yes[1], GREEN_L, GREEN); node(c, bx2, by, 176, 42, no[0], no[1], RED_L, RED)
-    ym = 46
-    line(c, bx1, by - 21, bx1, ym, MUTE, 1.6); line(c, bx2, by - 21, bx2, ym, MUTE, 1.6); line(c, bx1, ym, bx2, ym, MUTE, 1.6)
-    arrow(c, cx, ym, cx, 30, MUTE)
-    pill(c, cx, 17, 210, 24, bottom, H('#E8ECF5'), MUTE, 9.5)
+    pill_h, node_h = 24, 42
+    top_cy = h - 14
+    bot_cy = 16
+    dcy = h * 0.62
+    by = h * 0.36
+    ym = h * 0.13
+    dw, dh = min(240, w * 0.48), min(70, h * 0.14)
+    nw = min(176, w * 0.34)
+    bx1, bx2 = w * 0.20, w * 0.80
+    spread = min(120, w * 0.24)
+
+    pill(c, cx, top_cy, 150, pill_h, top, H('#E8ECF5'), MUTE, 9.5)
+    arrow(c, cx, top_cy - pill_h / 2 - 2, cx, dcy + dh / 2 + 2, MUTE)
+    diamond(c, cx, dcy, dw, dh, cond, YELLOW_L, H('#C98A00'))
+    line(c, cx - spread, dcy, bx1, dcy, GREEN, 2.2)
+    arrow(c, bx1, dcy, bx1, by + node_h / 2, GREEN, 2.2)
+    line(c, cx + spread, dcy, bx2, dcy, RED, 2.2)
+    arrow(c, bx2, dcy, bx2, by + node_h / 2, RED, 2.2)
+    T(c, 'ДА', cx - spread - 10, dcy + 6, 10.5, 'SB', GREEN, 'r')
+    T(c, 'НЕТ', cx + spread + 4, dcy + 6, 10.5, 'SB', RED)
+    node(c, bx1, by, nw, node_h, yes[0], yes[1], GREEN_L, GREEN)
+    node(c, bx2, by, nw, node_h, no[0], no[1], RED_L, RED)
+    line(c, bx1, by - node_h / 2, bx1, ym, MUTE, 1.6)
+    line(c, bx2, by - node_h / 2, bx2, ym, MUTE, 1.6)
+    line(c, bx1, ym, bx2, ym, MUTE, 1.6)
+    arrow(c, cx, ym, cx, bot_cy + pill_h / 2 + 2, MUTE)
+    pill(c, cx, bot_cy, min(210, w * 0.42), pill_h, bottom, H('#E8ECF5'), MUTE, 9.5)
 
 
 def d_flow3(c, w, h, conds, outs):
-    cx = 190; y1 = h - 66; y2 = y1 - 96; y3 = y2 - 84
-    pill(c, cx, h - 14, 150, 22, 'loop() начался', H('#E8ECF5'), MUTE, 9.5)
-    arrow(c, cx, h - 25, cx, y1 + 32, MUTE)
+    cx = w * 0.36
+    pill_h, node_h = 22, 42
+    dw = min(230, w * 0.46)
+    dh = min(62, h * 0.11)
+    nx = min(cx + 250, w - 100)
+    gap = max(72, (h - 50) / 4.2)
+    y1 = h - 38 - gap
+    y2 = y1 - gap
+    y3 = y2 - gap
+
+    pill(c, cx, h - 12, 150, pill_h, 'loop() начался', H('#E8ECF5'), MUTE, 9.5)
+    arrow(c, cx, h - 24, cx, y1 + dh / 2 + 2, MUTE)
     for y, cnd in ((y1, conds[0]), (y2, conds[1])):
-        diamond(c, cx, y, 230, 62, cnd, YELLOW_L, H('#C98A00'), 10.5)
+        diamond(c, cx, y, dw, dh, cnd, YELLOW_L, H('#C98A00'), 10.5)
     for y, (t1, t2, fill, st) in ((y1, outs[0]), (y2, outs[1])):
-        arrow(c, cx + 115, y, cx + 150, y, GREEN, 2.2); node(c, cx + 250, y, 190, 42, t1, t2, fill, st)
-        T(c, 'ДА', cx + 120, y + 6, 10, 'SB', GREEN)
-    arrow(c, cx, y1 - 31, cx, y2 + 31, RED, 2.2); T(c, 'НЕТ', cx + 6, y1 - 50, 10, 'SB', RED)
-    arrow(c, cx, y2 - 31, cx, y3 + 21, RED, 2.2); T(c, 'НЕТ', cx + 6, y2 - 50, 10, 'SB', RED)
-    t1, t2, fill, st = outs[2]; node(c, cx, y3, 190, 42, t1, t2, fill, st)
+        arrow(c, cx + dw / 2 + 4, y, nx - 95, y, GREEN, 2.2)
+        node(c, nx, y, min(190, w - nx - 10), node_h, t1, t2, fill, st)
+        T(c, 'ДА', cx + dw / 2 + 8, y + 6, 10, 'SB', GREEN)
+    arrow(c, cx, y1 - dh / 2 - 2, cx, y2 + dh / 2 + 2, RED, 2.2)
+    T(c, 'НЕТ', cx + 6, (y1 + y2) / 2, 10, 'SB', RED)
+    arrow(c, cx, y2 - dh / 2 - 2, cx, y3 + node_h / 2, RED, 2.2)
+    T(c, 'НЕТ', cx + 6, y2 - dh / 2 - 14, 10, 'SB', RED)
+    t1, t2, fill, st = outs[2]
+    node(c, cx, y3, min(190, w * 0.38), node_h, t1, t2, fill, st)
 
 
 def d_timeline(c, w, h, lab1, lab2, items, lamp_col=YELLOW):
@@ -299,12 +326,21 @@ def traffic(c, cx, cy, on):
 
 
 def d_traffic_row(c, w, h, states):
-    n = len(states); cw = w / n
+    n = len(states)
+    cw = w / n
+    housing = 90
+    pad_top = 8
+    label_h = 32
+    cy = h - pad_top - housing / 2
+    cap_y = cy - housing / 2 - 14
+    sub_y = cap_y - 13
     for i, (on, cap, sub) in enumerate(states):
         cx = cw * i + cw / 2
-        traffic(c, cx, h - 52, on)
-        T(c, cap, cx, 20, 9.6, 'SB', INK, 'c'); T(c, sub, cx, 8, 8, 'M', MUTE, 'c')
-        if i < n - 1: arrow(c, cx + 34, h - 52, cx + cw - 34, h - 52, MUTE, 1.8, 6)
+        traffic(c, cx, cy, on)
+        T(c, cap, cx, cap_y, 9.6, 'SB', INK, 'c')
+        T(c, sub, cx, sub_y, 8, 'M', MUTE, 'c')
+        if i < n - 1:
+            arrow(c, cx + 22, cy, cx + cw - 22, cy, MUTE, 1.8, 6)
 
 
 def d_button_inside(c, w, h):

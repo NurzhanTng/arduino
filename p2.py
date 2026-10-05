@@ -121,7 +121,7 @@ void loop() {
   delay(yellowTime);
   digitalWrite(yellow, LOW);
 }''', title='svetofor.ino', size=9, hl=(5, 6, 7)), SP(8),
-    Dia(CW, 150, d_traffic_row, states=[('red', 'красный', 'redTime'), ('green', 'зелёный', 'greenTime'), ('yellow', 'жёлтый', 'yellowTime')]),
+    Dia(CW, 158, d_traffic_row, states=[('red', 'красный', 'redTime'), ('green', 'зелёный', 'greenTime'), ('yellow', 'жёлтый', 'yellowTime')]),
     SP(6),
     CALL('try', ['Сделай красный на <b>5 секунд</b>, а жёлтый на <b>2 секунды</b>. Сколько строк пришлось поменять? (Правильный ответ — две, и обе вверху.)']),
 ], num=1)
