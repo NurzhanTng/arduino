@@ -111,7 +111,7 @@ def d_roadmap(c, w, h):
 
 
 def d_wiring(c, w, h, rows):
-    bw = 118; n = len(rows); top = h - 20; bot = 58; rowh = (top - bot) / n
+    bw = 118; n = len(rows); top = h - 20; bot = 52; rowh = (top - bot) / max(n, 1)
     rr(c, 0, 0, bw, h, 10, fill=TEAL, stroke=H('#006a6e'), lw=1.5)
     T(c, 'ARDUINO UNO', bw / 2 - 4, h - 15, 9.5, 'SB', white, 'c')
     c.saveState(); c.setFillColor(H('#20242F')); c.rect(12, h / 2 - 10, 36, 20, fill=1, stroke=0); c.restoreState()
@@ -122,25 +122,28 @@ def d_wiring(c, w, h, rows):
         c.saveState(); c.setFillColor(H('#20242F')); c.rect(bw - 4, y - 4.5, 9, 9, fill=1, stroke=0); c.restoreState()
         T(c, 'пин ' + r['pin'], bw - 9, y - 3, 8.5, 'SB', white, 'r')
         sc = r['color'] if r['kind'] == 'led' else ORANGE
+        lab = r.get('label', 'светодиод' if r['kind'] == 'led' else 'кнопка')
         if r['kind'] == 'led':
             line(c, bw + 4, y, bw + 44, y, sc, 2.6)
             resistor(c, bw + 44, y, 92, 14)
             line(c, bw + 136, y, cxx - 14, y, sc, 2.6)
             led(c, cxx, y, 13, r['color'], True, False)
-            T(c, '+', cxx - 25, y + 6, 11, 'SB', RED, 'c'); T(c, '−', cxx + 25, y + 6, 12, 'SB', INK, 'c')
+            T(c, '+', cxx - 25, y + 8, 10, 'SB', RED, 'c')
+            T(c, '−', cxx + 25, y + 8, 11, 'SB', INK, 'c')
             line(c, cxx + 14, y, xe, y, INK, 2.6)
-            T(c, '220 Ом', bw + 90, y - 17, 7.6, 'S', MUTE, 'c')
-            T(c, r.get('label', 'светодиод'), cxx, y - 26, 7.6, 'S', MUTE, 'c')
+            # ohm above wire; color name to the right of LED — never under the next row
+            T(c, '220 Ом', bw + 90, y + 11, 7.4, 'S', MUTE, 'c')
+            T(c, lab, (cxx + xe) / 2, y - 12, 7.6, 'S', MUTE, 'c')
         else:
             line(c, bw + 4, y, cxx - 17, y, sc, 2.6)
             button_sym(c, cxx, y, 28)
             line(c, cxx + 17, y, xe, y, INK, 2.6)
-            T(c, r.get('label', 'кнопка'), cxx, y - 26, 7.6, 'S', MUTE, 'c')
+            T(c, lab, (cxx + xe) / 2, y - 12, 7.6, 'S', MUTE, 'c')
         circ(c, xe, y, 3, fill=INK)
     line(c, xe, ys[0], xe, gy, INK, 2.6); line(c, xe, gy, bw + 4, gy, INK, 2.6)
     c.saveState(); c.setFillColor(H('#20242F')); c.rect(bw - 4, gy - 4.5, 9, 9, fill=1, stroke=0); c.restoreState()
     T(c, 'GND', bw - 9, gy - 3, 8.5, 'SB', white, 'r')
-    T(c, 'общий провод GND («земля», минус)', (xe + bw) / 2, gy - 15, 8, 'S', MUTE, 'c')
+    T(c, 'общий провод GND («земля», минус)', (xe + bw) / 2, gy - 14, 8, 'S', MUTE, 'c')
 
 
 def d_vars_boxes(c, w, h):
@@ -306,6 +309,438 @@ def d_flow3(c, w, h, conds, outs):
     T(c, 'НЕТ', cx + 6, y2 - dh / 2 - 14, 10, 'SB', RED)
     t1, t2, fill, st = outs[2]
     node(c, cx, y3, min(190, w * 0.38), node_h, t1, t2, fill, st)
+
+
+def d_for_anatomy(c, w, h):
+    """Annotated for (start; cond; step) { body }."""
+    parts = [
+        ('for (', MUTE, None),
+        ('int i = 0', BLUE, 'старт'),
+        ('; ', MUTE, None),
+        ('i < 3', ORANGE, 'пока правда'),
+        ('; ', MUTE, None),
+        ('i = i + 1', GREEN, 'шаг'),
+        (')', MUTE, None),
+    ]
+    size = 15
+    total = sum(stringWidth(t, 'MB', size) for t, _, _ in parts)
+    x = (w - total) / 2
+    y_code = h - 36
+    for t, col, lab in parts:
+        tw = stringWidth(t, 'MB', size)
+        T(c, t, x, y_code, size, 'MB', col)
+        if lab:
+            cx = x + tw / 2
+            line(c, cx, y_code - 6, cx, y_code - 28, col, 1.4, (2, 2))
+            T(c, lab, cx, y_code - 42, 9.5, 'SB', col, 'c')
+        x += tw
+    # body brace block
+    by = 28
+    bw = min(280, w * 0.55)
+    bx = (w - bw) / 2
+    rr(c, bx, by, bw, 52, 8, fill=BLUE_L, stroke=BLUE, lw=1.6)
+    T(c, '{   тело цикла   }', w / 2, by + 22, 12, 'SB', BLUE, 'c')
+    T(c, 'повторяется, пока условие правда', w / 2, by + 8, 8.5, 'S', MUTE, 'c')
+    arrow(c, w / 2, y_code - 52, w / 2, by + 54, MUTE, 1.8)
+
+
+def d_for_flow(c, w, h):
+    """Loop flowchart: init → cond? → body → step → back; else exit."""
+    cx = w * 0.42
+    rx = w * 0.78
+    pill_h, node_h = 26, 40
+    dw, dh = min(200, w * 0.40), min(56, h * 0.11)
+
+    y_init = h - 18
+    y_cond = h * 0.68
+    y_body = h * 0.42
+    y_step = h * 0.22
+    y_exit = h * 0.42
+
+    pill(c, cx, y_init, 130, pill_h, 'i = 0', H('#E8ECF5'), MUTE, 10)
+    arrow(c, cx, y_init - pill_h / 2 - 2, cx, y_cond + dh / 2 + 2, MUTE)
+    diamond(c, cx, y_cond, dw, dh, 'i < 3 ?', YELLOW_L, H('#C98A00'), 11)
+
+    # YES down to body
+    arrow(c, cx, y_cond - dh / 2 - 2, cx, y_body + node_h / 2 + 2, GREEN, 2.2)
+    T(c, 'ДА', cx + 10, y_cond - dh / 2 - 14, 10, 'SB', GREEN)
+    node(c, cx, y_body, min(170, w * 0.34), node_h, 'тело { }', 'HIGH / delay / LOW', GREEN_L, GREEN)
+
+    arrow(c, cx, y_body - node_h / 2 - 2, cx, y_step + node_h / 2 + 2, MUTE, 1.8)
+    node(c, cx, y_step, min(150, w * 0.30), node_h, 'i = i + 1', '', BLUE_L, BLUE)
+
+    # back up on the left
+    left_x = cx - min(110, w * 0.22)
+    line(c, cx - min(75, w * 0.15), y_step, left_x, y_step, MUTE, 1.6)
+    line(c, left_x, y_step, left_x, y_cond, MUTE, 1.6)
+    arrow(c, left_x, y_cond, cx - dw / 2 - 4, y_cond, MUTE, 1.6)
+    T(c, 'снова', left_x - 4, (y_step + y_cond) / 2, 8.5, 'S', MUTE, 'r')
+
+    # NO to the right → exit
+    line(c, cx + dw / 2 + 2, y_cond, rx, y_cond, RED, 2.2)
+    arrow(c, rx, y_cond, rx, y_exit + node_h / 2 + 2, RED, 2.2)
+    T(c, 'НЕТ', cx + dw / 2 + 8, y_cond + 8, 10, 'SB', RED)
+    node(c, rx, y_exit, min(150, w * 0.28), node_h, 'выход', 'цикл закончен', RED_L, RED)
+
+
+def d_while_anatomy(c, w, h):
+    """Annotated while (cond) { body }."""
+    parts = [
+        ('while (', MUTE, None),
+        ('условие', ORANGE, 'пока правда'),
+        (')', MUTE, None),
+    ]
+    size = 18
+    total = sum(stringWidth(t, 'MB', size) for t, _, _ in parts)
+    x = (w - total) / 2
+    y_code = h - 40
+    for t, col, lab in parts:
+        tw = stringWidth(t, 'MB', size)
+        T(c, t, x, y_code, size, 'MB', col)
+        if lab:
+            cx = x + tw / 2
+            line(c, cx, y_code - 8, cx, y_code - 32, col, 1.4, (2, 2))
+            T(c, lab, cx, y_code - 48, 10, 'SB', col, 'c')
+        x += tw
+    by = 24
+    bw = min(300, w * 0.58)
+    bx = (w - bw) / 2
+    rr(c, bx, by, bw, 56, 8, fill=PURPLE_L, stroke=PURPLE, lw=1.6)
+    T(c, '{   тело цикла   }', w / 2, by + 26, 13, 'SB', PURPLE, 'c')
+    T(c, 'повторяется, пока условие правда', w / 2, by + 10, 8.5, 'S', MUTE, 'c')
+    arrow(c, w / 2, y_code - 56, w / 2, by + 58, MUTE, 1.8)
+    T(c, 'Нет «старта» и «шага» как у for — только проверка и тело', w / 2, 8, 8.5, 'S', MUTE, 'c')
+
+
+def d_while_flow(c, w, h, cond='кнопка LOW ?', body1='лампа HIGH', body2='снова проверить'):
+    """while flowchart: cond? → YES body → back; NO exit."""
+    cx = w * 0.40
+    rx = w * 0.78
+    pill_h, node_h = 26, 44
+    dw, dh = min(210, w * 0.42), min(58, h * 0.12)
+
+    y_top = h - 16
+    y_cond = h * 0.62
+    y_body = h * 0.28
+    y_exit = h * 0.28
+
+    pill(c, cx, y_top, 160, pill_h, 'вошли в while', H('#E8ECF5'), MUTE, 9.5)
+    arrow(c, cx, y_top - pill_h / 2 - 2, cx, y_cond + dh / 2 + 2, MUTE)
+    diamond(c, cx, y_cond, dw, dh, cond, YELLOW_L, H('#C98A00'), 10.5)
+
+    arrow(c, cx, y_cond - dh / 2 - 2, cx, y_body + node_h / 2 + 2, GREEN, 2.2)
+    T(c, 'ДА', cx + 12, y_cond - dh / 2 - 12, 10, 'SB', GREEN)
+    node(c, cx, y_body, min(180, w * 0.36), node_h, body1, body2, GREEN_L, GREEN)
+
+    left_x = cx - min(100, w * 0.20)
+    line(c, cx - min(90, w * 0.18), y_body, left_x, y_body, MUTE, 1.6)
+    line(c, left_x, y_body, left_x, y_cond, MUTE, 1.6)
+    arrow(c, left_x, y_cond, cx - dw / 2 - 4, y_cond, MUTE, 1.6)
+    T(c, 'снова', left_x - 4, (y_body + y_cond) / 2, 8.5, 'S', MUTE, 'r')
+
+    line(c, cx + dw / 2 + 2, y_cond, rx, y_cond, RED, 2.2)
+    arrow(c, rx, y_cond, rx, y_exit + node_h / 2 + 2, RED, 2.2)
+    T(c, 'НЕТ', cx + dw / 2 + 8, y_cond + 8, 10, 'SB', RED)
+    node(c, rx, y_exit, min(150, w * 0.28), node_h, 'выход', 'идём дальше', RED_L, RED)
+
+
+def d_array_boxes(c, w, h, name='pins', values=('8', '9', '10'), highlight=None):
+    """Row of indexed boxes: name[0], name[1], …"""
+    n = len(values)
+    gap = 14
+    bw = min(120, (w - gap * (n - 1) - 20) / n)
+    # bands: title top, caption bottom (~28), index labels under boxes with air above caption
+    bh = min(70, max(42, h - 90))
+    total = n * bw + (n - 1) * gap
+    x0 = (w - total) / 2
+    cy = 48 + (h - 70) / 2
+    T(c, 'ряд чисел ' + name, w / 2, h - 14, 12, 'SB', INK, 'c')
+    T(c, 'Номера с нуля: первая коробка — %s[0], не %s[1]' % (name, name), w / 2, 10, 8.5, 'S', MUTE, 'c')
+    for i, val in enumerate(values):
+        x = x0 + i * (bw + gap)
+        cx = x + bw / 2
+        col = ORANGE if highlight == i else BLUE
+        fill = ORANGE_L if highlight == i else BLUE_L
+        rr(c, x, cy - bh / 2, bw, bh, 8, fill=fill, stroke=col, lw=2)
+        T(c, val, cx, cy - 4, min(20, bh * 0.42), 'MB', col, 'c')
+        T(c, '%s[%d]' % (name, i), cx, cy - bh / 2 - 16, 11, 'SB', col, 'c')
+
+
+def d_array_index(c, w, h):
+    """Anatomy of pins[i]: name + brackets + i → pick a box."""
+    # pins[i] stays tight; captions sit further apart (left / right), not between tokens.
+    parts = [
+        ('pins', BLUE, 'имя ряда', -48),
+        ('[', MUTE, None, 0),
+        ('i', ORANGE, 'номер коробки', 52),
+        (']', MUTE, None, 0),
+    ]
+    size = 22
+    total = sum(stringWidth(t, 'MB', size) for t, _, _, _ in parts)
+    x = (w - total) / 2
+    y_code = h - 52
+    for t, col, lab, dx in parts:
+        tw = stringWidth(t, 'MB', size)
+        T(c, t, x, y_code, size, 'MB', col)
+        if lab:
+            cx = x + tw / 2
+            lx = cx + dx
+            line(c, cx, y_code + size + 2, lx, y_code + size + 14, col, 1.4, (2, 2))
+            T(c, lab, lx, y_code + size + 20, 9.5, 'SB', col, 'c')
+        x += tw
+
+    # boxes mid-page; indices under boxes; grey caption in clear bottom band
+    values = ('8', '9', '10')
+    n = 3
+    gap, bw, bh = 16, 88, 46
+    total_b = n * bw + (n - 1) * gap
+    x0 = (w - total_b) / 2
+    cy = 62
+    for i, val in enumerate(values):
+        bx = x0 + i * (bw + gap)
+        cx = bx + bw / 2
+        on = (i == 1)
+        col = ORANGE if on else BLUE
+        fill = ORANGE_L if on else H('#F1F3F8')
+        rr(c, bx, cy - bh / 2, bw, bh, 7, fill=fill, stroke=col, lw=2 if on else 1.4)
+        T(c, val, cx, cy - 2, 16, 'MB', col, 'c')
+        T(c, '[%d]' % i, cx, cy - bh / 2 - 14, 10, 'SB', col, 'c')
+    mid = x0 + 1 * (bw + gap) + bw / 2
+    arrow(c, mid, y_code - 8, mid, cy + bh / 2 + 8, ORANGE, 2)
+    T(c, 'если i = 1 → открыли эту коробку (внутри 9)', w / 2, 10, 9, 'S', MUTE, 'c')
+
+
+def d_array_walk(c, w, h):
+    """Step strip: for walks i=0,1,2 over pins[]."""
+    steps = [
+        ('i = 0', 'pins[0]', '8', 'красная'),
+        ('i = 1', 'pins[1]', '9', 'жёлтая'),
+        ('i = 2', 'pins[2]', '10', 'зелёная'),
+    ]
+    n = len(steps)
+    gap = 10
+    bw = (w - gap * (n - 1) - 8) / n
+    bh = h - 36
+    T(c, 'for бежит по ряду: каждый круг — новая коробка', w / 2, h - 12, 10.5, 'SB', INK, 'c')
+    for i, (si, expr, val, lamp) in enumerate(steps):
+        x = 4 + i * (bw + gap)
+        cx = x + bw / 2
+        cols = (RED, YELLOW, GREEN)[i]
+        rr(c, x, 8, bw, bh, 10, fill=white, stroke=cols, lw=2)
+        pill(c, cx, bh - 6, min(bw - 16, 100), 22, si, H('#E8ECF5'), MUTE, 9.5)
+        arrow(c, cx, bh - 20, cx, bh * 0.62, MUTE, 1.6)
+        T(c, expr, cx, bh * 0.55, 12, 'MB', ORANGE, 'c')
+        T(c, '= ' + val, cx, bh * 0.42, 14, 'SB', cols, 'c')
+        led(c, cx, 28, 12, cols, True, True)
+        T(c, lamp, cx, 10, 8, 'S', MUTE, 'c')
+        if i < n - 1:
+            arrow(c, x + bw + 1, bh * 0.5, x + bw + gap - 1, bh * 0.5, MUTE, 1.5)
+
+
+def d_random_range(c, w, h, max_n=3):
+    """Show random(max) → numbers 0 .. max-1."""
+    T(c, 'random(%d)  →  одно из чисел:' % max_n, w / 2, h - 16, 12, 'SB', INK, 'c')
+    n = max_n
+    gap = 18
+    bw = min(90, (w - gap * (n - 1) - 40) / n)
+    total = n * bw + (n - 1) * gap
+    x0 = (w - total) / 2
+    # leave room above for title, below for caption + dice hint
+    cy = h * 0.52
+    for i in range(n):
+        x = x0 + i * (bw + gap)
+        cx = x + bw / 2
+        rr(c, x, cy - 26, bw, 52, 10, fill=GREEN_L, stroke=GREEN, lw=2)
+        T(c, str(i), cx, cy - 6, 22, 'MB', GREEN, 'c')
+    T(c, 'От 0 до %d включительно. Числа %d в ответе не будет.' % (max_n - 1, max_n),
+      w / 2, 36, 9.5, 'S', MUTE, 'c')
+    pill(c, w / 2, 14, 260, 20, 'как бросок кубика — но числа 0, 1, 2 (не 1, 2, 3)', H('#E8ECF5'), MUTE, 9)
+
+
+def d_random_pick(c, w, h):
+    """random → index → open pins[i] → lamp."""
+    cx = w / 2
+    pill(c, cx, h - 16, 160, 24, 'r = random(3)', PURPLE_L, PURPLE, 10)
+    arrow(c, cx, h - 30, cx, h * 0.72, MUTE, 1.8)
+    # three index chips
+    vals = [('0', 'pins[0]=8', RED), ('1', 'pins[1]=9', YELLOW), ('2', 'pins[2]=10', GREEN)]
+    gap, bw = 12, min(140, (w - 40) / 3)
+    total = 3 * bw + 2 * gap
+    x0 = (w - total) / 2
+    y = h * 0.55
+    for i, (idx, lab, col) in enumerate(vals):
+        x = x0 + i * (bw + gap)
+        rr(c, x, y - 22, bw, 44, 8, fill=mix(col, white, 0.85), stroke=col, lw=1.8)
+        T(c, 'если r = ' + idx, x + bw / 2, y + 4, 9.5, 'SB', col, 'c')
+        T(c, lab, x + bw / 2, y - 12, 9, 'M', INK, 'c')
+    arrow(c, cx, y - 28, cx, 50, MUTE, 1.8)
+    # lamps
+    for i, col in enumerate((RED, YELLOW, GREEN)):
+        led(c, w / 2 - 70 + i * 70, 28, 11, col, i == 1, True)
+    T(c, 'загорелась одна лампа — какая выпала', w / 2, 8, 9, 'S', MUTE, 'c')
+
+
+def d_rgb_module(c, w, h):
+    """RGB module block with R G B GND labels + one mixed glow."""
+    mw, mh = min(200, w * 0.40), min(88, h * 0.42)
+    mx = 30
+    my = h * 0.42  # module sits mid-high; pins hang down with clear air above caption
+    rr(c, mx, my, mw, mh, 10, fill=H('#2A3348'), stroke=INK, lw=2)
+    T(c, 'RGB-модуль', mx + mw / 2, my + mh - 16, 11, 'SB', white, 'c')
+    labels = [('R', RED), ('G', GREEN), ('B', BLUE), ('GND', MUTE)]
+    for i, (lab, col) in enumerate(labels):
+        px = mx + 28 + i * (mw - 40) / 3
+        line(c, px, my, px, my - 14, col if lab != 'GND' else INK, 2.5)
+        circ(c, px, my - 18, 4, fill=col if lab != 'GND' else INK)
+        T(c, lab, px, my - 32, 10, 'SB', col if lab != 'GND' else INK, 'c')
+    cx, cy = mx + mw + (w - mx - mw) / 2, my + mh / 2
+    for col, a, r in ((RED, 0.2, 44), (GREEN, 0.18, 38), (BLUE, 0.2, 34)):
+        c.saveState(); c.setFillColor(col); c.setFillAlpha(a); c.circle(cx, cy, r, fill=1, stroke=0); c.restoreState()
+    circ(c, cx, cy, 20, fill=H('#E8E8FF'), stroke=INK, lw=1.5)
+    T(c, 'три цвета', cx, cy - 2, 10, 'SB', INK, 'c')
+    T(c, 'в одном', cx, cy - 14, 10, 'SB', INK, 'c')
+    T(c, 'Общий катод: GND общий. Резисторы уже на модуле.', w / 2, 14, 9.5, 'S', MUTE, 'c')
+
+
+def d_rgb_wiring(c, w, h):
+    """Arduino → R/G/B/GND on module, pins 3/5/6."""
+    # left board stub
+    bw = 100
+    rr(c, 0, 10, bw, h - 20, 10, fill=TEAL, stroke=H('#006a6e'), lw=1.5)
+    T(c, 'ARDUINO', bw / 2, h - 28, 9, 'SB', white, 'c')
+    pins = [('3', 'R', RED, h * 0.78), ('5', 'G', GREEN, h * 0.55), ('6', 'B', BLUE, h * 0.32), ('GND', 'GND', INK, h * 0.12)]
+    mx = w - 130
+    rr(c, mx, h * 0.15, 110, h * 0.7, 10, fill=H('#2A3348'), stroke=INK, lw=1.8)
+    T(c, 'RGB', mx + 55, h * 0.15 + h * 0.7 - 16, 12, 'SB', white, 'c')
+    for pin, lab, col, y in pins:
+        c.saveState(); c.setFillColor(H('#20242F')); c.rect(bw - 4, y - 5, 9, 10, fill=1, stroke=0); c.restoreState()
+        T(c, pin if pin != 'GND' else 'GND', bw - 10, y - 3, 8.5, 'SB', white, 'r')
+        line(c, bw + 4, y, mx + 8, y, col, 2.4)
+        circ(c, mx + 12, y, 4, fill=col)
+        T(c, lab, mx + 28, y - 4, 10, 'SB', white if lab != 'GND' else H('#C9CFDB'))
+    T(c, 'Пины с значком ~ (PWM): 3, 5, 6', w / 2, 8, 9, 'S', MUTE, 'c')
+
+
+def d_rgb_mix(c, w, h):
+    """Color recipe cards: R G B values → resulting color."""
+    recipes = [
+        ('красный', (255, 0, 0), RED),
+        ('зелёный', (0, 255, 0), GREEN),
+        ('синий', (0, 0, 255), BLUE),
+        ('жёлтый', (255, 255, 0), YELLOW),
+        ('фиолетовый', (255, 0, 255), PURPLE),
+        ('белый', (255, 255, 255), H('#E8ECF5')),
+    ]
+    cols_n, rows_n = 3, 2
+    gap = 10
+    cw = (w - gap * (cols_n - 1)) / cols_n
+    ch = (h - 28 - gap) / rows_n
+    T(c, 'analogWrite: 0 = выкл, 255 = на полную', w / 2, h - 12, 10, 'SB', INK, 'c')
+    for i, (name, (rv, gv, bv), col) in enumerate(recipes):
+        col_i, row_i = i % cols_n, i // cols_n
+        x = col_i * (cw + gap)
+        y = h - 28 - (row_i + 1) * (ch + gap) + gap
+        rr(c, x, y, cw, ch, 8, fill=white, stroke=col, lw=1.8)
+        circ(c, x + 22, y + ch / 2, 12, fill=col, stroke=INK, lw=1)
+        T(c, name, x + 48, y + ch - 18, 10, 'SB', INK)
+        T(c, 'R%d G%d B%d' % (rv, gv, bv), x + 48, y + 10, 8.5, 'M', MUTE)
+
+
+def d_pot(c, w, h):
+    """Potentiometer symbol with 3 legs labeled — legs attached to the body."""
+    cx, cy = w * 0.30, h * 0.50
+    r = 36
+    circ(c, cx, cy, r, fill=H('#C9CFDB'), stroke=INK, lw=2)
+    circ(c, cx, cy, 14, fill=H('#5B6784'), stroke=INK, lw=1.5)
+    line(c, cx, cy, cx + 20, cy + 16, RED, 3)
+    circ(c, cx + 20, cy + 16, 4, fill=RED)
+    T(c, 'крутилка', cx, cy + r + 14, 11, 'SB', INK, 'c')
+    # three legs from rim of circle downward
+    legs = (('5V', RED, -0.75), ('на A0', ORANGE, 0.0), ('GND', INK, 0.75))
+    for lab, col, ang in legs:
+        # attach on lower arc of the pot
+        ax = cx + r * 0.55 * ang
+        ay = cy - r * 0.85
+        lx = cx + (r + 8) * ang * 0.9
+        ly = cy - r - 28
+        line(c, ax, ay, lx, ly, col, 2.6)
+        circ(c, lx, ly, 4, fill=col)
+        T(c, lab, lx, ly - 16, 9.5, 'SB', col, 'c')
+    rx = w * 0.68
+    T(c, 'Три ноги', rx, h - 28, 13, 'SB', INK, 'c')
+    for i, (t1, t2) in enumerate((
+        ('края', '5V и GND'),
+        ('середина', 'сигнал на A0'),
+        ('крутим', 'число 0…1023'),
+    )):
+        yy = h - 58 - i * 32
+        T(c, t1, rx - 55, yy, 11, 'SB', BLUE)
+        T(c, t2, rx + 15, yy, 11, 'S', MUTE)
+    T(c, 'Ручка выбирает, «сколько сигнала» идёт на среднюю ногу.', w / 2, 10, 9, 'S', MUTE, 'c')
+
+
+def d_pot_wiring(c, w, h):
+    """Board 5V/A0/GND wired all the way onto pot legs."""
+    bw = 110
+    rr(c, 0, 8, bw, h - 16, 10, fill=TEAL, stroke=H('#006a6e'), lw=1.5)
+    T(c, 'ARDUINO', bw / 2, h - 26, 9, 'SB', white, 'c')
+    px, py = w - 95, h * 0.50
+    r = 30
+    circ(c, px, py, r, fill=H('#C9CFDB'), stroke=INK, lw=2)
+    circ(c, px, py, 11, fill=H('#5B6784'))
+    T(c, 'ручка', px, py + r + 14, 10, 'SB', INK, 'c')
+    # leg attach points on left side of pot (wires arrive from board)
+    legs = [
+        ('5V', RED, h * 0.72, px - r * 0.35, py + r * 0.75),
+        ('A0', ORANGE, h * 0.45, px - r, py),
+        ('GND', INK, h * 0.18, px - r * 0.35, py - r * 0.75),
+    ]
+    for lab, col, by, lx, ly in legs:
+        c.saveState(); c.setFillColor(H('#20242F')); c.rect(bw - 4, by - 5, 9, 10, fill=1, stroke=0); c.restoreState()
+        T(c, lab, bw - 10, by - 3, 9, 'SB', white, 'r')
+        # wire from board pin to pot leg — ends on the body
+        line(c, bw + 4, by, lx, ly, col, 2.6)
+        circ(c, lx, ly, 4.5, fill=col, stroke=INK, lw=1)
+    T(c, 'Края — 5V и GND. Середина — только на A0.', w / 2, 8, 9, 'S', MUTE, 'c')
+
+
+def d_analog_scale(c, w, h):
+    """Bar 0..1023 with knob position."""
+    T(c, 'analogRead(A0) → число', w / 2, h - 12, 11, 'SB', INK, 'c')
+    x0, x1 = 40, w - 40
+    y = h * 0.45
+    line(c, x0, y, x1, y, LINEC, 6)
+    for t, lab in ((0, '0'), (0.5, '512'), (1, '1023')):
+        x = x0 + (x1 - x0) * t
+        line(c, x, y - 10, x, y + 10, MUTE, 1.5)
+        T(c, lab, x, y - 22, 10, 'MB', INK, 'c')
+    # marker at ~700
+    xm = x0 + (x1 - x0) * 0.68
+    circ(c, xm, y, 10, fill=ORANGE, stroke=INK, lw=1.5)
+    T(c, 'сейчас ≈ 700', xm, y + 28, 10, 'SB', ORANGE, 'c')
+    T(c, 'Влево — ближе к 0. Вправо — ближе к 1023.', w / 2, 12, 9, 'S', MUTE, 'c')
+
+
+def d_buzzer(c, w, h):
+    """Simple buzzer + pin 11 wiring hint."""
+    # board stub
+    bw = 100
+    rr(c, 0, 10, bw, h - 20, 10, fill=TEAL, stroke=H('#006a6e'), lw=1.5)
+    T(c, 'ARDUINO', bw / 2, h - 28, 9, 'SB', white, 'c')
+    y11, yg = h * 0.62, h * 0.28
+    for lab, y in (('11', y11), ('GND', yg)):
+        c.saveState(); c.setFillColor(H('#20242F')); c.rect(bw - 4, y - 5, 9, 10, fill=1, stroke=0); c.restoreState()
+        T(c, lab, bw - 10, y - 3, 9, 'SB', white, 'r')
+    # buzzer body
+    bx = w - 100
+    circ(c, bx, h * 0.45, 34, fill=H('#2A3348'), stroke=INK, lw=2)
+    circ(c, bx, h * 0.45, 18, fill=H('#5B6784'))
+    T(c, 'зуммер', bx, h * 0.45 - 48, 11, 'SB', INK, 'c')
+    line(c, bw + 4, y11, bx - 20, h * 0.55, ORANGE, 2.4)
+    line(c, bw + 4, yg, bx - 20, h * 0.35, INK, 2.4)
+    T(c, '+', bx - 28, h * 0.55, 10, 'SB', ORANGE, 'c')
+    T(c, '−', bx - 28, h * 0.35, 10, 'SB', INK, 'c')
+    T(c, 'Плюс зуммера → пин 11. Минус → GND.', w / 2, 10, 9.5, 'S', MUTE, 'c')
 
 
 def d_timeline(c, w, h, lab1, lab2, items, lamp_col=YELLOW):

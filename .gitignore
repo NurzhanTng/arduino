@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 arduino_uroki.pdf
+arduino_uroki_2.pdf
 _pass1.pdf
+_pass1_v2.pdf
 fonts/*.ttf
 fonts/*.zip

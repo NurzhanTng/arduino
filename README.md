@@ -1,6 +1,6 @@
 # Arduino: уроки для юного программиста
 
-PDF-книжка (выпуск 1) собирается из Python-скриптов на reportlab.
+PDF-книжки собираются из Python-скриптов на reportlab.
 
 ## Сборка
 
@@ -8,10 +8,11 @@ PDF-книжка (выпуск 1) собирается из Python-скрипт�
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python build.py
+python build.py     # выпуск 1 → arduino_uroki.pdf
+python build2.py    # выпуск 2 → arduino_uroki_2.pdf
 ```
 
-Результат: `arduino_uroki.pdf` рядом со скриптами.
+Результаты рядом со скриптами.
 
 ### Шрифты DejaVu
 

@@ -14,13 +14,15 @@
 | [materialy.md](materialy.md) | Список деталей (35 пунктов) |
 | [proverka.md](proverka.md) | Чеклист до занятий, безопасность |
 | [kniga-vypusk-1.md](kniga-vypusk-1.md) | Статус PDF выпуска 1 |
-| [uroki/](uroki/) | Brief’ы уроков и финального проекта |
+| [kniga-vypusk-2.md](kniga-vypusk-2.md) | Статус PDF выпуска 2 |
+| [uroki/](uroki/) | Brief’ы уроков и финальных проектов |
 
 ## Как собрать PDF
 
 ```bash
 source .venv/bin/activate
-python build.py
+python build.py    # выпуск 1 → arduino_uroki.pdf
+python build2.py   # выпуск 2 → arduino_uroki_2.pdf
 ```
 
 См. [README](../README.md) в корне.
