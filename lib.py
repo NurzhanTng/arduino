@@ -266,7 +266,7 @@ def CALL(kind, body, title=None, width=CW):
     return t
 
 
-def TB(rows, colw, col, light, head=True, size=10, first_bold=False, center_cols=()):
+def TB(rows, colw, col, light, head=True, size=10, first_bold=False, center_cols=(), pad=4.5):
     ps = ParagraphStyle('t', fontName='S', fontSize=size, leading=size * 1.32, textColor=INK)
     pc = ParagraphStyle('tc', parent=ps, alignment=TA_CENTER)
     hs = ParagraphStyle('th', parent=ps, fontName='SB', textColor=white)
@@ -282,7 +282,7 @@ def TB(rows, colw, col, light, head=True, size=10, first_bold=False, center_cols
         data.append(row)
     t = Table(data, colWidths=colw)
     st = [('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), ('GRID', (0, 0), (-1, -1), 0.6, LINEC),
-          ('TOPPADDING', (0, 0), (-1, -1), 4.5), ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
+          ('TOPPADDING', (0, 0), (-1, -1), pad), ('BOTTOMPADDING', (0, 0), (-1, -1), pad),
           ('LEFTPADDING', (0, 0), (-1, -1), 7), ('RIGHTPADDING', (0, 0), (-1, -1), 7),
           ('ROUNDEDCORNERS', [5, 5, 5, 5])]
     if head: st.append(('BACKGROUND', (0, 0), (-1, 0), col))
@@ -372,29 +372,49 @@ class Doc:
         c.showPage()
 
     def toc_story(self, entries):
-        rows = []
-        ps = ParagraphStyle('toc', fontName='S', fontSize=9.5, leading=12, textColor=INK)
-        pn = ParagraphStyle('tocn', fontName='SB', fontSize=10, leading=12, textColor=BLUE, alignment=2)
-        for e in entries:
-            if e['tag'] in ('ОБЛОЖКА', 'СОДЕРЖАНИЕ'):
-                continue
-            left = Paragraph('<font color="#5B6784" size="7.5">%s</font>  <link href="%s">%s</link>'
-                             % (e['tag'], e['dest'], e['title']), ps)
-            right = Paragraph('<link href="%s"><font color="#2F80ED"><b>%d</b></font></link>' % (e['dest'], e['n']), pn)
-            rows.append([left, right])
-        if not rows:
+        usable = [e for e in entries if e['tag'] not in ('ОБЛОЖКА', 'СОДЕРЖАНИЕ')]
+        if not usable:
             return [P('Страницы появятся после сборки.')]
-        t = Table(rows, colWidths=[CW - 42, 42])
-        t.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 2.5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
-            ('LINEBELOW', (0, 0), (-1, -2), 0.35, LINEC),
-            ('LEFTPADDING', (0, 0), (-1, -1), 2),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+        ps = ParagraphStyle('toc', fontName='S', fontSize=8.2, leading=10.2, textColor=INK)
+        mid = (len(usable) + 1) // 2
+        cols = [usable[:mid], usable[mid:]]
+        tables = []
+        col_w = (CW - 12) / 2
+        for chunk in cols:
+            rows = []
+            for e in chunk:
+                cell = Paragraph(
+                    '<font color="#5B6784" size="6.5">%s</font> '
+                    '<link href="%s">%s</link> '
+                    '<link href="%s"><font color="#2F80ED"><b>%d</b></font></link>'
+                    % (e['tag'], e['dest'], e['title'], e['dest'], e['n']), ps)
+                rows.append([cell])
+            t = Table(rows, colWidths=[col_w])
+            t.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('TOPPADDING', (0, 0), (-1, -1), 1.2),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 1.2),
+                ('LINEBELOW', (0, 0), (-1, -2), 0.25, LINEC),
+                ('LEFTPADDING', (0, 0), (-1, -1), 2),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+            ]))
+            tables.append(t)
+        if len(tables) == 1:
+            tables.append(SP(1))
+        wrap = Table([[tables[0], tables[1]]], colWidths=[col_w, col_w])
+        wrap.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (0, 0), 6),
+            ('RIGHTPADDING', (1, 0), (1, 0), 0),
+            ('TOPPADDING', (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
         ]))
-        intro = P('Нажми на название или номер. Внизу страниц — ссылка <b>← Содержание</b>.', SMALL) if entries else SP(1)
-        return [intro, SP(6), t]
+        return [
+            P('Нажми название или номер. Внизу страниц — <b>← Содержание</b>.', SMALL),
+            SP(4),
+            wrap,
+        ]
 
     def save(self):
         self.c.save()

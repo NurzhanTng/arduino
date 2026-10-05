@@ -14,7 +14,7 @@
 | [materialy.md](materialy.md) | Список деталей (35 пунктов) |
 | [proverka.md](proverka.md) | Чеклист до занятий, безопасность |
 | [kniga-vypusk-1.md](kniga-vypusk-1.md) | Статус PDF выпуска 1 |
-| [uroki/](uroki/) | Brief’ы уроков |
+| [uroki/](uroki/) | Brief’ы уроков и финального проекта |
 
 ## Как собрать PDF
 
