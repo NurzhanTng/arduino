@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+arduino_uroki.pdf
+fonts/*.ttf
+fonts/*.zip
